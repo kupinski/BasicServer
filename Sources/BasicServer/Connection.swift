@@ -10,13 +10,16 @@ import Network
 
 
 
+/// A connection error that may be thrown when something goes wrong with a connection.
 public enum ConnectionError : Error {
     case invalidArguments(args: [String])
 }
 
 
+/// An individual client connection manager.  The primary variable to set is `commands` which is a Tuple of command strings, the number of arguments for the command, and the method to call when the command is received.
 public protocol Connection {
     var connection: NWConnection { get set }
+    
     
     /// A description of the client connection status.  Check `connection.status` for actual status.
     var connectionStatus: String { get set }
@@ -52,11 +55,16 @@ public protocol Connection {
     func stop(error: Error?)
 }
 
+
+
+//  The default implementation.
 public extension Connection {
 
     
     init(_ connection: NWConnection) {
         self.init(connection)
+        
+        self.connectionStatus = ""
         
         self.connection = connection
         
