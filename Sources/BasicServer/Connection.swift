@@ -18,11 +18,10 @@ public enum ConnectionError : Error {
 
 /// An individual client connection manager.  The primary variable to set is `commands` which is a Tuple of command strings, the number of arguments for the command, and the method to call when the command is received.
 public protocol Connection {
-    var connection: NWConnection { get set }
-    
+    var connection: NWConnection? { get set }
     
     /// A description of the client connection status.  Check `connection.status` for actual status.
-    var connectionStatus: String { get set }
+    var connectionStatus: String { get }
     
     /// Specify the command strings,  their number of arguments, and the command method to call
     var commands: [(string: String, numArgs: Int, command: ([String])throws->()  )] { get set }
@@ -30,6 +29,8 @@ public protocol Connection {
     /// Create a new server connection
     /// - Parameter connection: The Network.framework connection
     init(_ connection: NWConnection)
+    
+    init()
     
     /// Parse a network message.
     /// - Parameter message: The message with white space or new lines separating out the various arguments.
@@ -40,12 +41,11 @@ public protocol Connection {
     
     /// Change the status of the client connection
     /// - Parameter newState: The new state
-   func connectionStateUpdate(to newState: NWConnection.State)
-    
+    func connectionStateUpdate(to newState: NWConnection.State)
     
     /// The connection failed.  Stop everything
     /// - Parameter error: The error message
-   func connectionDidFail(error: Error)
+    func connectionDidFail(error: Error)
     
     /// The connection ended.  Stop everything
     func connectionDidEnd()
@@ -60,12 +60,35 @@ public protocol Connection {
 //  The default implementation.
 public extension Connection {
 
+    var connectionStatus: String {
+        if let connection = connection {
+            switch (connection.state) {
+            case .ready:
+                return("Ready")
+            case .setup:
+                return("Setup")
+            case .cancelled:
+                return("Cancelled")
+            case .preparing:
+                return("Preparring")
+            case .waiting(let inErr):
+                return("Waiting \(inErr)")
+            case .failed(let inErr):
+                return("Failed \(inErr))")
+            default:
+                return("Unknown status")
+            }
+        } else {
+            return("Connection invalid")
+        }
+    }
+    
     
     init(_ connection: NWConnection) {
-        self.init(connection)
-        
-        self.connectionStatus = ""
-        
+        print("MAK0: Here")
+        self.init()
+        print("MAK0: Done")
+                
         self.connection = connection
         
         let connectionQueue = DispatchQueue(label: "New Connection",
@@ -74,11 +97,11 @@ public extension Connection {
                                             autoreleaseFrequency: .inherit,
                                             target: nil)
         
-        connection.stateUpdateHandler = connectionStateUpdate(to: )
+        self.connection?.stateUpdateHandler = connectionStateUpdate(to:)
         
         awaitCommands()
         
-        connection.start(queue: connectionQueue)
+        self.connection?.start(queue: connectionQueue)
     }
         
     
@@ -113,15 +136,13 @@ public extension Connection {
     
     func awaitCommands() {
         
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 512)  { (data, _, isComplete, error) in
+        connection?.receive(minimumIncompleteLength: 1, maximumLength: 512)  { (data, _, isComplete, error) in
             if let data = data, !data.isEmpty {
-                while (!data.isEmpty) {
-                    guard let message = String(data: data, encoding: .utf8) else {
-                        fatalError("Data Sync Error.  Awaiting command.")
-                    }
-                    
-                    self.parseNetworkData(message)
+                guard let message = String(data: data, encoding: .utf8) else {
+                    fatalError("Data Sync Error.  Awaiting command.")
                 }
+                
+                self.parseNetworkData(message)
             }
             if isComplete {
                 self.connectionDidEnd()
@@ -133,21 +154,11 @@ public extension Connection {
         }
     }
     
-    mutating func connectionStateUpdate(to newState: NWConnection.State) {
+    func connectionStateUpdate(to newState: NWConnection.State) {
         switch (newState) {
-        case .ready:
-            connectionStatus = "Ready"
-        case .setup:
-            connectionStatus = "Setup"
-        case .cancelled:
-            connectionStatus = "Cancelled"
-        case .preparing:
-            connectionStatus = "Preparring"
         case .waiting(let inErr):
-            connectionStatus = "Waiting \(inErr)"
             connectionDidFail(error: inErr)
         case .failed(let inErr):
-            connectionStatus = "Failed \(inErr)"
             connectionDidFail(error: inErr)
         default:
             break
@@ -159,16 +170,16 @@ public extension Connection {
         stop(error: error)
     }
     
-    private func connectionDidEnd() {
+    func connectionDidEnd() {
         print("Connection ended without error")
         self.stop(error: nil)
     }
     
     /// When a connection stops, we need to cancel it and set the connection variable to nil.  This will allow the client to reconnect if needed.
     /// - Parameter error: The error
-    private func stop(error: Error?) {
-        self.connection.stateUpdateHandler = nil
-        self.connection.cancel()
+    func stop(error: Error?) {
+        self.connection?.stateUpdateHandler = nil
+        self.connection?.cancel()
     }
     
 }

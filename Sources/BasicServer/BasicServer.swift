@@ -4,7 +4,7 @@ import Foundation
 
 
 /// A TCP server that will stream H-Matrix data (rows or columns) to the client
-public class SystemTransformServer<T: Connection> {
+public class BasicServer<T: Connection> {
     /// The port number to connect to
     public var port: Int
     
@@ -25,9 +25,10 @@ public class SystemTransformServer<T: Connection> {
     /// - Parameters:
     ///   - forCamera: The camera model to attach to
     ///   - dataProvider: How the data are provided to this server.
-    public init(withConnectionManager: T.Type, onPort: Int) {
+    public init(onPort: Int) {
         port = onPort
-        connectionType = withConnectionManager
+        
+        self.connectionType = T.self
         
         listener = try! NWListener(using: .tcp, on: NWEndpoint.Port(integerLiteral: UInt16(port)))
 
@@ -41,7 +42,7 @@ public class SystemTransformServer<T: Connection> {
     /// A new commention has been requested.  Spawn a new process to serve this client.  NOTE.  Only one client is allowed to connect to the camera.
     /// - Parameter connection: The connection object
     public func newConnection(to connection: NWConnection) {
-
+        print("New connection")
         let _ = T(connection)
     }
     
