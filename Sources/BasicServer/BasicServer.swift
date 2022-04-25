@@ -3,7 +3,7 @@ import Foundation
 
 
 
-/// A TCP server that will stream H-Matrix data (rows or columns) to the client
+/// A TCP that can handle multiple connections of type T
 public class BasicServer<T: Connection> {
     /// The port number to connect to
     public var port: Int
