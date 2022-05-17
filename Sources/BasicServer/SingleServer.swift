@@ -15,7 +15,7 @@ open class SingleServer {
     
     
     /// A description of the server status.  Check `listener.status` for actual status.
-    public var serverStatus = ""
+    open var serverStatus = ""
     
     // Network server and connection variables
     /// The listener waiting for client connections
@@ -79,7 +79,9 @@ open class SingleServer {
             print("Warning: Currently only one connection is allowed per camera server")
         } else {
             self.connection = connection
-                
+            if case let .hostPort(host: host, port: _) = connection.endpoint {
+                serverStatus = "Connection to \(host) is active"
+            }
             start()
         }
     }
