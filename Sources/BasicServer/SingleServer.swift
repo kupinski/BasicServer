@@ -40,6 +40,12 @@ open class SingleServer {
         listener.start(queue: .main)
     }
     
+    open func unknownCommand(_ command: String) {
+    }
+    
+    open func invalidArguments(_ command: String, args: [String]) {
+    }
+
     
     func parseNetworkData(_ message: String) {
         var stringArray = message.components(separatedBy: .whitespacesAndNewlines)
@@ -60,12 +66,14 @@ open class SingleServer {
             }
             catch ConnectionError.invalidArguments(args: arguments) {
                 print("Warning: The command \"\(enteredCommand)\" was passed the following invalid arguments \(arguments)")
+                invalidArguments(enteredCommand, args: arguments)
             }
             catch {
                 print("Warning: Unknown error \(error)")
             }
         } else {
             print("Warning: Unknown command \"\(enteredCommand)\" with \(numArgs) arguments: \(arguments)")
+            unknownCommand(enteredCommand)
         }
     }
     
