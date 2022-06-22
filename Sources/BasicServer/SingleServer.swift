@@ -88,7 +88,7 @@ open class SingleServer {
         } else {
             self.connection = connection
             if case let .hostPort(host: host, port: _) = connection.endpoint {
-                serverStatus = "Connection to \(host) is active"
+                serverStatus = "Connection from \(host) is active"
             }
             start()
         }
@@ -151,11 +151,13 @@ open class SingleServer {
     }
     
     func connectionDidFail(error: Error) {
+        serverStatus = "Connection failed"
         print("Connection did fail, error: \(error)")
         stop(error: error)
     }
     
     func connectionDidEnd() {
+        serverStatus = "Connection ended.  Ready for new connection."
         print("Connection ended without error")
         self.stop(error: nil)
     }
