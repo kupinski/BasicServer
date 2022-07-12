@@ -49,7 +49,8 @@ open class SingleServer {
     
     func parseNetworkData(_ message: String) {
         let commandArray = message.components(separatedBy: .newlines)
-        for msg in commandArray {
+        let newArray = commandArray.filter({ $0 != ""})
+        for msg in newArray {
             var stringArray = msg.components(separatedBy: .whitespaces)
             
             // First string is the command
