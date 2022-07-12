@@ -48,32 +48,35 @@ open class SingleServer {
 
     
     func parseNetworkData(_ message: String) {
-        var stringArray = message.components(separatedBy: .whitespacesAndNewlines)
-        
-        // First string is the command
-        let enteredCommand = stringArray.remove(at: 0)
-        
-        // All others are arguments.  Filter out the empty ones.
-        let arguments = stringArray.filter({$0 != ""})
-        let numArgs = arguments.count
-        
-        let matchingCommand = self.commands.filter({
-            ($0.string == enteredCommand) && ($0.numArgs == numArgs)
-        })
-        if matchingCommand.count == 1 {
-            do {
-                try matchingCommand[0].command(arguments)
+        let commandArray = message.components(separatedBy: .newlines)
+        for msg in commandArray {
+            var stringArray = msg.components(separatedBy: .whitespaces)
+            
+            // First string is the command
+            let enteredCommand = stringArray.remove(at: 0)
+            
+            // All others are arguments.  Filter out the empty ones.
+            let arguments = stringArray.filter({$0 != ""})
+            let numArgs = arguments.count
+            
+            let matchingCommand = self.commands.filter({
+                ($0.string == enteredCommand) && ($0.numArgs == numArgs)
+            })
+            if matchingCommand.count == 1 {
+                do {
+                    try matchingCommand[0].command(arguments)
+                }
+                catch ConnectionError.invalidArguments(args: arguments) {
+                    print("Warning: The command \"\(enteredCommand)\" was passed the following invalid arguments \(arguments)")
+                    invalidArguments(enteredCommand, args: arguments)
+                }
+                catch {
+                    print("Warning: Unknown error \(error)")
+                }
+            } else {
+                print("Warning: Unknown command \"\(enteredCommand)\" with \(numArgs) arguments: \(arguments)")
+                unknownCommand(enteredCommand)
             }
-            catch ConnectionError.invalidArguments(args: arguments) {
-                print("Warning: The command \"\(enteredCommand)\" was passed the following invalid arguments \(arguments)")
-                invalidArguments(enteredCommand, args: arguments)
-            }
-            catch {
-                print("Warning: Unknown error \(error)")
-            }
-        } else {
-            print("Warning: Unknown command \"\(enteredCommand)\" with \(numArgs) arguments: \(arguments)")
-            unknownCommand(enteredCommand)
         }
     }
     
