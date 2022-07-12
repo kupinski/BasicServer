@@ -3,7 +3,7 @@ import Foundation
 
 
 
-/// A TCP that is designed to handle only a single connection
+/// A TCP server that is designed to handle only a single connection
 open class SingleServer {
     public var connection: NWConnection? = nil
     
